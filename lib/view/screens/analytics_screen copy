@@ -1,0 +1,290 @@
+import 'package:flutter/material.dart';
+import 'package:fl_chart/fl_chart.dart';
+import 'package:easy_localization/easy_localization.dart'; // ← for `.tr()`
+import '../../../utils/colors.dart';
+import '../widgets/header.dart';
+
+class AnalyticsScreen extends StatefulWidget {
+  const AnalyticsScreen({super.key});
+
+  @override
+  State<AnalyticsScreen> createState() => _AnalyticsScreenState();
+}
+
+class _AnalyticsScreenState extends State<AnalyticsScreen> {
+  String _selectedPeriod = 'this_month';
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: darkBlack,
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.only(bottom: 30),
+        child: Column(
+          children: [
+            const Header(),
+            Padding(
+              padding: const EdgeInsets.all(24.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'analytics_reports'.tr(),
+                        style: const TextStyle(
+                          fontSize: 22.0,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.white,
+                        ),
+                      ),
+                      _buildPeriodSelector(),
+                    ],
+                  ),
+                  const SizedBox(height: 20),
+                  _buildSummaryCards(),
+                  const SizedBox(height: 20),
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(
+                        flex: 2,
+                        child: _buildChartCard(
+                          title: 'sales_overview'.tr(),
+                          chart: _buildLineChart(),
+                        ),
+                      ),
+                      const SizedBox(width: 20),
+                      Expanded(
+                        flex: 1,
+                        child: _buildChartCard(
+                          title: 'top_selling_products'.tr(),
+                          chart: _buildBarChart(),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPeriodSelector() {
+    final periods = ['today', 'this_week', 'this_month', 'this_year'];
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12),
+      decoration: BoxDecoration(
+        color: lightBlack,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: darkGrey),
+      ),
+      child: DropdownButtonHideUnderline(
+        child: DropdownButton<String>(
+          value: _selectedPeriod,
+          dropdownColor: lightBlack,
+          style: const TextStyle(color: Colors.white),
+          items: periods.map((String value) {
+            return DropdownMenuItem<String>(
+              value: value,
+              child: Text(value.tr()),
+            );
+          }).toList(),
+          onChanged: (newValue) {
+            setState(() {
+              _selectedPeriod = newValue!;
+            });
+          },
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSummaryCards() {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final crossAxisCount = constraints.maxWidth > 1200
+            ? 4
+            : (constraints.maxWidth > 800 ? 2 : 1);
+        return GridView.count(
+          crossAxisCount: crossAxisCount,
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          crossAxisSpacing: 20,
+          mainAxisSpacing: 20,
+          children: [
+            _buildSummaryCard(
+              title: 'total_revenue'.tr(),
+              value: '\$25,480.50',
+              icon: Icons.monetization_on,
+              color: Colors.green,
+            ),
+            _buildSummaryCard(
+              title: 'total_sales'.tr(),
+              value: '1,250',
+              icon: Icons.point_of_sale,
+              color: Colors.blue,
+            ),
+            _buildSummaryCard(
+              title: 'total_orders'.tr(),
+              value: '850',
+              icon: Icons.receipt_long,
+              color: Colors.orange,
+            ),
+            _buildSummaryCard(
+              title: 'new_customers'.tr(),
+              value: '75',
+              icon: Icons.person_add,
+              color: Colors.purple,
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildSummaryCard({
+    required String title,
+    required String value,
+    required IconData icon,
+    required Color color,
+  }) {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: lightBlack,
+        borderRadius: BorderRadius.circular(15.0),
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: color.withOpacity(0.2),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(icon, color: color, size: 28),
+          ),
+          const SizedBox(width: 15),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(title,
+                  style: const TextStyle(color: darkGrey, fontSize: 14)),
+              const SizedBox(height: 5),
+              Text(value,
+                  style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold)),
+            ],
+          )
+        ],
+      ),
+    );
+  }
+
+  Widget _buildChartCard({required String title, required Widget chart}) {
+    return Container(
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: lightBlack,
+        borderRadius: BorderRadius.circular(15.0),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(title,
+              style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold)),
+          const SizedBox(height: 20),
+          SizedBox(height: 300, child: chart),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLineChart() {
+    return LineChart(
+      LineChartData(
+        gridData: const FlGridData(show: false),
+        titlesData: const FlTitlesData(show: false),
+        borderData: FlBorderData(show: false),
+        lineBarsData: [
+          LineChartBarData(
+            spots: const [
+              FlSpot(0, 3.0),
+              FlSpot(1, 1.0),
+              FlSpot(2, 4.0),
+              FlSpot(3, 2.0),
+              FlSpot(4, 5.0),
+              FlSpot(5, 3.0),
+              FlSpot(6, 4.0),
+            ],
+            isCurved: true,
+            color: primaryColor,
+            barWidth: 4,
+            isStrokeCapRound: true,
+            dotData: const FlDotData(show: false),
+            belowBarData: BarAreaData(
+              show: true,
+              gradient: LinearGradient(
+                colors: [
+                  primaryColor.withOpacity(0.3),
+                  primaryColor.withOpacity(0.0)
+                ],
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBarChart() {
+    return BarChart(
+      BarChartData(
+        alignment: BarChartAlignment.spaceAround,
+        barTouchData: const BarTouchData(enabled: false),
+        titlesData: const FlTitlesData(show: false),
+        borderData: FlBorderData(show: false),
+        gridData: const FlGridData(show: false),
+        barGroups: [
+          _makeBarGroup(0, 5.0, color: Colors.blue),
+          _makeBarGroup(1, 6.5, color: Colors.orange),
+          _makeBarGroup(2, 5.0, color: Colors.green),
+          _makeBarGroup(3, 7.5, color: Colors.red),
+          _makeBarGroup(4, 6.0, color: Colors.purple),
+        ],
+      ),
+    );
+  }
+
+  BarChartGroupData _makeBarGroup(int x, double y,
+      {Color color = Colors.white}) {
+    return BarChartGroupData(
+      x: x,
+      barRods: [
+        BarChartRodData(
+          toY: y,
+          color: color,
+          width: 15,
+          borderRadius: const BorderRadius.only(
+            topLeft: Radius.circular(4),
+            topRight: Radius.circular(4),
+          ),
+        ),
+      ],
+    );
+  }
+}
